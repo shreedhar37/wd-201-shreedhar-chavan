@@ -12,10 +12,12 @@ end
 
 # `domain` contains the domain name we have to look up.
 domain = get_command_line_argument
+
 # File.readlines reads a file and returns an
 # array of string, where each element is a line
 # https://www.rubydoc.info/stdlib/core/IO:readlines
 dns_raw = File.readlines("zone")
+
 # ..
 # ..
 def parse_dns(dns_raw)
