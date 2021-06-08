@@ -16,9 +16,6 @@ domain = get_command_line_argument
 # array of string, where each element is a line
 # https://www.rubydoc.info/stdlib/core/IO:readlines
 dns_raw = File.readlines("zone")
-
-
-
 # ..
 # ..
 def parse_dns(dns_raw)
@@ -36,7 +33,48 @@ def parse_dns(dns_raw)
 
     end
   end
+
   return dns_records
+
+end
+
+def resolve(dns_records, lookup_chain, domain)
+  flag = 0
+
+  dns_records[:CNAME].each do |x, y|
+
+    if (("#{x}" == domain or "#{y}" == domain) and flag!=1)
+      flag = 1
+
+      if "#{x}" == domain
+        lookup_chain.push("#{y}")
+      end
+
+      dns_records[:CNAME].each do |i, j|
+
+        if "#{y}" == "#{i}"
+          lookup_chain.push("#{j}")
+          domain = "#{j}"
+          resolve(dns_records, lookup_chain,domain)
+        end
+
+      end
+
+    dns_records[:A].each do |b, c|
+      if "#{b}" == "#{y}"
+        lookup_chain.push("#{c}")
+      end
+
+    end
+
+    end
+  end
+
+  if flag != 1
+    lookup_chain =["record not found for #{domain}"]
+  else
+    return lookup_chain
+  end
 
 end
 # ..
@@ -45,7 +83,7 @@ end
 # To complete the assignment, implement `parse_dns` and `resolve`.
 # Remember to implement them above this line since in Ruby
 # you can invoke a function only after it is defined.
-#dns_records = parse_dns(dns_raw)
-#lookup_chain = [domain]
-#lookup_chain = resolve(dns_records, lookup_chain, domain)
-#puts lookup_chain.join(" => ")
+dns_records = parse_dns(dns_raw)
+lookup_chain = [domain]
+lookup_chain = resolve(dns_records, lookup_chain, domain)
+puts lookup_chain.join(" => ")
