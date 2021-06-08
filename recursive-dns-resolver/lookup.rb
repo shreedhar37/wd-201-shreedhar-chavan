@@ -19,31 +19,24 @@ dns_raw = File.readlines("zone")
 # ..
 # ..
 def parse_dns(dns_raw)
-
-  dns_records = {:A => [], :CNAME => []}
+  dns_records = { :A => [], :CNAME => [] }
 
   dns_raw.each do |line|
-
-    if (line.strip.split(", ")[0] =="A" and line[0] != "#" and line.length != 1) #ignoring comments and empty lines
+    if (line.strip.split(", ")[0] == "A" and line[0] != "#" and line.length != 1) #ignoring comments and empty lines
       dns_records[:A].push(line.strip.split(", ")[1..2]) #taking 1st and 2nd element from array
-
-
-    elsif (line.strip.split(", ")[0] =="CNAME" and line[0] != "#" and line.length != 1)
+    elsif (line.strip.split(", ")[0] == "CNAME" and line[0] != "#" and line.length != 1)
       dns_records[:CNAME].push(line.strip.split(", ")[1..2])
-
     end
   end
 
   return dns_records
-
 end
 
 def resolve(dns_records, lookup_chain, domain)
   flag = 0
 
   dns_records[:CNAME].each do |x, y|
-
-    if (("#{x}" == domain or "#{y}" == domain) and flag!=1)
+    if (("#{x}" == domain or "#{y}" == domain) and flag != 1)
       flag = 1
 
       if "#{x}" == domain
@@ -51,32 +44,28 @@ def resolve(dns_records, lookup_chain, domain)
       end
 
       dns_records[:CNAME].each do |i, j|
-
         if "#{y}" == "#{i}"
           lookup_chain.push("#{j}")
           domain = "#{j}"
-          resolve(dns_records, lookup_chain,domain)
+          resolve(dns_records, lookup_chain, domain)
         end
-
       end
 
-    dns_records[:A].each do |b, c|
-      if "#{b}" == "#{y}"
-        lookup_chain.push("#{c}")
+      dns_records[:A].each do |b, c|
+        if "#{b}" == "#{y}"
+          lookup_chain.push("#{c}")
+        end
       end
-
-    end
-
     end
   end
 
   if flag != 1
-    lookup_chain =["record not found for #{domain}"]
+    lookup_chain = ["record not found for #{domain}"]
   else
     return lookup_chain
   end
-
 end
+
 # ..
 # ..
 
