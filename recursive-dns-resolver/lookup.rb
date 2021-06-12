@@ -25,17 +25,17 @@ def parse_dns(dns_raw)
     reject { |line| line.empty? }.
     map { |line| line.strip.split(", ") }.
     reject do |record|
-    record[0] != "A" && record[0] != "CNAME" && record[0] != "XYZ"
+    record[0] != "A" && record[0] != "CNAME"
     # 'Reject' records that aren't valid.
   end
     .each_with_object({}) do |record, records|
-    records[:"#{record[1]}"] = { :type => "#{record[0]}", :target => "#{record[2]}" }
+    records[record[1]] = { :type => record[0], :target => record[2] }
     # Modify the `records` hash so that it contains necessary details.
   end
 end
 
 def resolve(dns_records, lookup_chain, domain)
-  record = dns_records[:"#{domain}"]
+  record = dns_records[domain]
   if (!record)
     lookup_chain << "Error: Record not found for " + domain
   elsif record[:type] == "CNAME"
