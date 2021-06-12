@@ -25,7 +25,7 @@ def parse_dns(dns_raw)
     reject { |line| line.empty? }.
     map { |line| line.strip.split(", ") }.
     reject do |record|
-    record[0] != "A" && record[0] != "CNAME"
+    record[0] != "A" && record[0] != "CNAME" && record[0] != "XYZ"
     # 'Reject' records that aren't valid.
   end
     .each_with_object({}) do |record, records|
@@ -37,16 +37,14 @@ end
 def resolve(dns_records, lookup_chain, domain)
   record = dns_records[:"#{domain}"]
   if (!record)
-    lookup_chain << "Error: Record not found for #{domain}"
-    return
+    lookup_chain << "Error: Record not found for " + domain
   elsif record[:type] == "CNAME"
     lookup_chain.push(record[:target])
     resolve(dns_records, lookup_chain, record[:target])
   elsif record[:type] == "A"
     lookup_chain.push(record[:target])
   else
-    lookup_chain << "Invalid record type for #{domain}"
-    return
+    lookup_chain << "Invalid record type for " + domain
   end
 end
 
