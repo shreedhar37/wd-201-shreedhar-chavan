@@ -21,50 +21,32 @@ dns_raw = File.readlines("zone")
 # ..
 # ..
 def parse_dns(dns_raw)
-  dns_records = { :A => [], :CNAME => [] }
-
-  dns_raw.each do |line|
-    if (line.strip.split(", ")[0] == "A" and line[0] != "#" and line.length != 1) #ignoring comments and empty lines
-      dns_records[:A].push(line.strip.split(", ")[1..2]) #taking 1st and 2nd element from array
-    elsif (line.strip.split(", ")[0] == "CNAME" and line[0] != "#" and line.length != 1)
-      dns_records[:CNAME].push(line.strip.split(", ")[1..2])
-    end
+  dns_raw.
+    reject { |line| line.empty? }.
+    map { |line| line.strip.split(", ") }.
+    reject do |record|
+    record[0] != "A" && record[0] != "CNAME"
+    # 'Reject' records that aren't valid.
   end
-
-  return dns_records
+    .each_with_object({}) do |record, records|
+    records[:"#{record[1]}"] = { :type => "#{record[0]}", :target => "#{record[2]}" }
+    # Modify the `records` hash so that it contains necessary details.
+  end
 end
 
 def resolve(dns_records, lookup_chain, domain)
-  flag = 0
-
-  dns_records[:CNAME].each do |x, y|
-    if (("#{x}" == domain or "#{y}" == domain) and flag != 1)
-      flag = 1
-
-      if "#{x}" == domain
-        lookup_chain.push("#{y}")
-      end
-
-      dns_records[:CNAME].each do |i, j|
-        if "#{y}" == "#{i}"
-          lookup_chain.push("#{j}")
-          domain = "#{j}"
-          resolve(dns_records, lookup_chain, domain)
-        end
-      end
-
-      dns_records[:A].each do |b, c|
-        if "#{b}" == "#{y}"
-          lookup_chain.push("#{c}")
-        end
-      end
-    end
-  end
-
-  if flag != 1
-    lookup_chain = ["record not found for #{domain}"]
+  record = dns_records[:"#{domain}"]
+  if (!record)
+    lookup_chain << "Error: Record not found for #{domain}"
+    return
+  elsif record[:type] == "CNAME"
+    lookup_chain.push(record[:target])
+    resolve(dns_records, lookup_chain, record[:target])
+  elsif record[:type] == "A"
+    lookup_chain.push(record[:target])
   else
-    return lookup_chain
+    lookup_chain << "Invalid record type for #{domain}"
+    return
   end
 end
 
@@ -77,4 +59,4 @@ end
 dns_records = parse_dns(dns_raw)
 lookup_chain = [domain]
 lookup_chain = resolve(dns_records, lookup_chain, domain)
-puts lookup_chain.join(" => ")
+puts lookup_chain.join("=>")
