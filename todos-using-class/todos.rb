@@ -7,34 +7,19 @@ class Todo
     @text = text
     @due_date = due_date
     @completed = completed
-    @todos = [{ :text => @text, :due_date => @due_date, :completed => @completed }]
-  end
-
-  def text
-    @text
   end
 
   def due_date
     @due_date
   end
 
-  def completed
-    @completed
-  end
-
   # ..
   # ..
 
   def to_displayable_string
-    if @due_date == Date.today
-      if @completed
-        "[x] " + text
-      else
-        "[ ] " + text
-      end
-    else
-      "[ ] " + text + " " + due_date.to_s
-    end
+    display_status = @completed ? "[x]" : "[ ]"
+    display_date = @due_date == Date.today ? nil : @due_date
+    "#{display_status} #{@text} #{display_date}"
   end
 end
 
